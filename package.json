@@ -1,0 +1,22 @@
+{
+  "name": "practnode",
+  "version": "1.0.0",
+  "description": "Как можно работать с таблицами в MySQL на Node.js",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "-"
+  },
+  "keywords": [
+    "-"
+  ],
+  "author": "asmalcev",
+  "license": "ISC",
+  "dependencies": {
+    "mysql2": "^3.9.8",
+    "sync-mysql": "^3.0.1"
+  }
+}

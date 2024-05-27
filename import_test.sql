@@ -1,20 +1,18 @@
 -- Creation of a test base...
 
-CREATE DATABASE test;
-
-CREATE TABLE files (
+CREATE TABLE IF NOT EXISTS files (
   id_file int(11) NOT NULL,
   id_my int(11) NOT NULL,
   description text NOT NULL,
   name_origin text NOT NULL,
   path text NOT NULL,
   date_upload text NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=cp1251;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 INSERT INTO files (id_file, id_my, description, name_origin, path, date_upload) VALUES
 (16, 17, 'Закачка из менеджера', 'test file 1.pdf', 'files/test_file1.pdf', '31-03-2023  20:07:59');
 
-CREATE TABLE myarttable (
+CREATE TABLE IF NOT EXISTS myarttable (
   id int(11) NOT NULL,
   text text NOT NULL,
   description text NOT NULL,

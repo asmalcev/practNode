@@ -1,0 +1,11 @@
+version: '3.1'
+
+services:
+    db:
+        image: mysql
+        ports:
+            - '3306:3306'
+        environment:
+            MYSQL_ALLOW_EMPTY_PASSWORD: true
+            MYSQL_ROOT_PASSWORD: 'rootpass'
+            MYSQL_DATABASE: test
