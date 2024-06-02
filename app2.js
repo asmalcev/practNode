@@ -2,31 +2,37 @@ const mysql = require('mysql2/promise');
 const qs = require('querystring');
 const fs = require('fs');
 
-const TABLE_NAME = 'myarttable';
+const TABLE_NAME = 'body';
 
 async function main() {
     const connection = await mysql.createConnection({
         host: 'localhost',
         user: 'root',
-        database: 'test',
+        database: 'observatory',
         password: 'rootpass',
     });
 
-    const result = await connection.query(`SHOW TABLES LIKE '${TABLE_NAME}';`);
-    if (result[0].length < 1) {
-        console.log('NO TABLES');
-
-        const sqlScript = fs.readFileSync(__dirname + '/import_test.sql').toString();
+    const execFile = async (pathToFile) => {
+        const sqlScript = fs.readFileSync(__dirname + pathToFile).toString();
 
         for (const script of sqlScript.split(';')) {
+            if (script.trim() === '') continue; 
             await connection.query(script);
         }
+    };
 
-    } else {
-        console.log('HERE ARE TABLES', result[0]);
+    const result = await connection.query(`SHOW TABLES LIKE '${TABLE_NAME}';`);
+    if (result[0].length < 1) {
+        await execFile('/db_init.sql');
+        await execFile('/db_init_relations.sql');
+        await execFile('/db_init_others.sql');
     }
 
-    const version = (await connection.query('SELECT VERSION() AS ver'))[0][0].ver;
+    const version = (await connection.query('SELECT VERSION() AS ver'))[0][0]
+        .ver;
+    const columns = (
+        await connection.query(`SHOW COLUMNS FROM ${TABLE_NAME}`)
+    )[0];
 
     // обработка параметров из формы.
     async function reqPost(request, response) {
@@ -39,14 +45,13 @@ async function main() {
 
             request.on('end', async function () {
                 var post = qs.parse(body);
-                var sInsert =
-                    `INSERT INTO ${TABLE_NAME} (text, description, keywords) VALUES ("` +
-                    post['col1'] +
-                    '","' +
-                    post['col2'] +
-                    '","' +
-                    post['col3'] +
-                    '")';
+
+                const cols = columns.map((col) => col.Field).join(', ');
+                const values = columns
+                    .map((_, i) => `"${post[`col${i + 1}`]}"`)
+                    .join(', ');
+
+                var sInsert = `INSERT INTO ${TABLE_NAME} (${cols}) VALUES (${values})`;
                 var results = await connection.query(sInsert);
                 console.log('Done. Hint: ' + sInsert);
             });
@@ -55,16 +60,14 @@ async function main() {
 
     // выгрузка массива данных.
     async function ViewSelect(res) {
-        const columns = (await connection.query(`SHOW COLUMNS FROM ${TABLE_NAME}`))[0];
-
         res.write('<tr>');
         for (let i = 0; i < columns.length; i++)
             res.write('<td>' + columns[i].Field + '</td>');
         res.write('</tr>');
 
-        const data = (await connection.query(
-            `SELECT * FROM ${TABLE_NAME} WHERE id>14 ORDER BY id DESC`
-        ))[0];
+        const data = (await connection.query(`CALL selectallbody();`))[0];
+
+        console.info('%c TODO', 'color: red', data);
 
         for (let i = 0; i < data.length; i++)
             res.write(
@@ -78,6 +81,17 @@ async function main() {
                     data[i].keywords +
                     '</td></tr>'
             );
+    }
+
+    // выгрузка массива данных.
+    async function Inputs(res) {
+        for (let i = 0; i < columns.length; i++) {
+            res.write(
+                `<label>${columns[i].Field} <input type="text" name="col${
+                    i + 1
+                }" placeholder="${columns[i].Type}" /></label><br>`
+            );
+        }
     }
 
     async function ViewVer(res) {
@@ -94,18 +108,28 @@ async function main() {
 
         // чтение шаблока в каталоге со скриптом.
         var array = fs
-            .readFileSync(__dirname + '/select.html')
+            .readFileSync(__dirname + '/select2.html')
             .toString()
             .split('\n');
-        console.log(__dirname + '/select.html');
+        console.log(__dirname + '/select2.html');
 
         for (i in array) {
-            // подстановка.
-            if (array[i].trim() != '@tr' && array[i].trim() != '@ver')
-                res.write(array[i]);
+            const word = array[i].trim();
 
-            if (array[i].trim() == '@tr') await ViewSelect(res);
-            if (array[i].trim() == '@ver') await ViewVer(res);
+            if (word === '@cols') {
+                await Inputs(res);
+                continue;
+            }
+            if (word === '@tr') {
+                await ViewSelect(res);
+                continue;
+            }
+            if (word === '@ver') {
+                await ViewVer(res);
+                continue;
+            }
+
+            res.write(array[i]);
         }
         res.end();
         console.log('1 User Done.');

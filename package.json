@@ -4,7 +4,8 @@
   "description": "Как можно работать с таблицами в MySQL на Node.js",
   "main": "app.js",
   "scripts": {
-    "start": "node app.js"
+    "start": "node app.js",
+    "start2": "node app2.js"
   },
   "repository": {
     "type": "git",
