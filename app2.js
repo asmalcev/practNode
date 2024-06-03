@@ -67,20 +67,13 @@ async function main() {
 
         const data = (await connection.query(`CALL selectallbody();`))[0];
 
-        console.info('%c TODO', 'color: red', data);
-
-        for (let i = 0; i < data.length; i++)
+        for (let i = 0; i < data.length; i++) {
             res.write(
-                '<tr><td>' +
-                    String(data[i].id) +
-                    '</td><td>' +
-                    data[i].text +
-                    '</td><td>' +
-                    data[i].description +
-                    '</td><td>' +
-                    data[i].keywords +
-                    '</td></tr>'
+                `<tr>${Object.entries(data[i])
+                    .map(([key, value]) => `<td>${value}</td>`)
+                    .join('')}</tr>`
             );
+        }
     }
 
     // выгрузка массива данных.
