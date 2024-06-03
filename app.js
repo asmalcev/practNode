@@ -53,6 +53,8 @@ async function main() {
                 var results = await connection.query(sInsert);
                 console.log('Done. Hint: ' + sInsert);
             });
+
+            response.setHeader('Refresh', '2;url=http://127.0.0.1:3000');
         }
     }
 
@@ -96,7 +98,7 @@ async function main() {
     // создание ответа в браузер, на случай подключения.
     const http = require('http');
     const server = http.createServer(async (req, res) => {
-        reqPost(req, res);
+        await reqPost(req, res);
         console.log('Loading...');
 
         res.statusCode = 200;
